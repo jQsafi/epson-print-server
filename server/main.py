@@ -74,7 +74,7 @@ def get_scanners():
 
 @app.route("/api/print", methods=["POST"])
 def submit_print_job():
-    """Accepts document/image upload and prints or spools to simulated PDF printer."""
+    """Accepts document/image upload and prints or spools to simulated PDF printer with paper configuration."""
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -84,6 +84,8 @@ def submit_print_job():
 
     copies = int(request.form.get("copies", 1))
     printer_name = request.form.get("printer", None)
+    paper_size = request.form.get("paper_size", "a4")
+    media_type = request.form.get("media_type", "plain")
 
     temp_file = SPOOL_DIR / uploaded_file.filename
     uploaded_file.save(str(temp_file))
@@ -92,7 +94,9 @@ def submit_print_job():
         result = print_file(
             filepath=str(temp_file),
             printer_name=printer_name,
-            copies=copies
+            copies=copies,
+            paper_size=paper_size,
+            media_type=media_type
         )
         return jsonify({"status": "success", "result": result})
     except Exception as e:

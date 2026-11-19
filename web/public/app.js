@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropZone = document.getElementById('dropZone');
   const selectedFileName = document.getElementById('selectedFileName');
   const printerSelect = document.getElementById('printerSelect');
+  const paperSizeSelect = document.getElementById('paperSizeSelect');
+  const paperMediaSelect = document.getElementById('paperMediaSelect');
   const copiesCount = document.getElementById('copiesCount');
   const printSubmitBtn = document.getElementById('printSubmitBtn');
   const printNotification = document.getElementById('printNotification');
@@ -133,6 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('copies', copiesCount.value);
+    formData.append('paper_size', paperSizeSelect.value);
+    formData.append('media_type', paperMediaSelect.value);
     if (printerSelect.value) {
       formData.append('printer', printerSelect.value);
     }
@@ -147,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(result.detail || 'Printing failed');
 
       printNotification.className = 'notification success';
-      printNotification.textContent = `✅ Successfully submitted to ${result.result.printer} (${result.result.copies} copy/copies)!`;
+      printNotification.textContent = `✅ Printed to ${result.result.printer} (${result.result.copies} copy/copies) | Paper: ${result.result.paper_size} [${result.result.media_type}]`;
       printForm.reset();
       selectedFileName.textContent = '';
     } catch (err) {

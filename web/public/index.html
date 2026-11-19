@@ -63,6 +63,27 @@
             </div>
 
             <div class="form-group">
+              <label for="paperSizeSelect">Paper Size</label>
+              <select id="paperSizeSelect">
+                <option value="a4" selected>A4 (210 x 297 mm)</option>
+                <option value="legal">Legal (8.5 x 14 in)</option>
+                <option value="letter">Letter (8.5 x 11 in)</option>
+                <option value="4x6">Photo 4x6 in (10x15 cm)</option>
+                <option value="5x7">Photo 5x7 in (13x18 cm)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="paperMediaSelect">Paper Type / Quality</label>
+              <select id="paperMediaSelect">
+                <option value="plain" selected>Plain / Regular Paper</option>
+                <option value="glossy">Glossy Photo Paper</option>
+                <option value="matte">Matte Photo Paper</option>
+                <option value="envelope">Envelope</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="copiesCount">Copies</label>
               <input type="number" id="copiesCount" value="1" min="1" max="50">
             </div>

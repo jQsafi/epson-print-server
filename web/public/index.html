@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Epson L3110 Print & Scan Station</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo-area">
+        <div class="icon-badge">🖨️</div>
+        <div>
+          <h1>Epson Gateway</h1>
+          <p class="subtitle">Windows 11 Print & Scan Hub (Epson L3110)</p>
+        </div>
+      </div>
+      <div class="status-badge" id="systemStatusBadge">
+        <span class="dot"></span> <span id="statusText">Connecting...</span>
+      </div>
+    </header>
+
+    <!-- Info Banner -->
+    <div class="network-banner" id="networkBanner">
+      <span>📡 Host IP: <strong id="hostIpDisplay">Detecting...</strong></span>
+      <span>•</span>
+      <span>AirPrint: <strong id="airprintStatusDisplay">Active</strong></span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-tab="printTab">🖨️ Print Station</button>
+      <button class="tab-btn" data-tab="scanTab">📄 Scan Station</button>
+      <button class="tab-btn" data-tab="devicesTab">⚙️ Hardware Status</button>
+    </div>
+
+    <!-- TAB 1: PRINT STATION -->
+    <main class="tab-content active" id="printTab">
+      <div class="card">
+        <h2>Submit Print Job</h2>
+        <p class="card-desc">Send PDFs, images, or documents to the Epson printer from any phone or computer.</p>
+
+        <form id="printForm">
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-icon">📁</div>
+            <p><strong>Click to browse</strong> or drag & drop files here</p>
+            <span class="file-hint">PDF, PNG, JPG, or TXT (Max 50MB)</span>
+            <input type="file" id="printFileInput" accept=".pdf,.png,.jpg,.jpeg,.txt" required>
+            <div class="selected-file" id="selectedFileName"></div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="printerSelect">Target Printer</label>
+              <select id="printerSelect">
+                <option value="">Auto-Detect (Epson L3110)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="copiesCount">Copies</label>
+              <input type="number" id="copiesCount" value="1" min="1" max="50">
+            </div>
+          </div>
+
+          <button type="submit" class="primary-btn" id="printSubmitBtn">
+            <span>Send to Printer</span>
+          </button>
+        </form>
+
+        <div class="notification" id="printNotification"></div>
+      </div>
+    </main>
+
+    <!-- TAB 2: SCAN STATION -->
+    <main class="tab-content" id="scanTab">
+      <div class="card">
+        <h2>Acquire Scanner Document</h2>
+        <p class="card-desc">Trigger a scan on the flatbed glass and download directly to your device.</p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="scanDpi">Resolution (DPI)</label>
+            <select id="scanDpi">
+              <option value="150">150 DPI (Fast / Draft)</option>
+              <option value="300" selected>300 DPI (Standard / Crisp)</option>
+              <option value="600">600 DPI (High Detail / Photo)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="scanColor">Color Mode</label>
+            <select id="scanColor">
+              <option value="color" selected>Full Color</option>
+              <option value="grayscale">Grayscale</option>
+              <option value="bw">Black & White (Document)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="scanFormat">Output Format</label>
+            <select id="scanFormat">
+              <option value="pdf" selected>PDF Document (.pdf)</option>
+              <option value="jpg">JPEG Image (.jpg)</option>
+              <option value="png">PNG Image (.png)</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="primary-btn scan-btn" id="triggerScanBtn">
+          <span>🚀 Start Scan Now</span>
+        </button>
+
+        <div class="loader-container" id="scanLoader">
+          <div class="spinner"></div>
+          <p>Scanning in progress... Please wait while the carriage moves.</p>
+        </div>
+
+        <!-- Scan Result Preview -->
+        <div class="scan-result" id="scanResult">
+          <h3>Scan Complete!</h3>
+          <div class="preview-box" id="previewBox"></div>
+          <div class="btn-group">
+            <a href="#" id="downloadScanBtn" class="download-btn" target="_blank" download>
+              ⬇️ Download File
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 3: DEVICES & AIRPRINT STATUS -->
+    <main class="tab-content" id="devicesTab">
+      <div class="card">
+        <h2>Connected Hardware & Services</h2>
+        <p class="card-desc">Real-time status of Windows 11 drivers, ports, and discovery.</p>
+
+        <div class="status-list" id="hardwareList">
+          <div class="status-item">
+            <div>
+              <strong>Epson Print Queue</strong>
+              <p id="printerStatusDetail">Loading...</p>
+            </div>
+            <span class="tag online">Active</span>
+          </div>
+
+          <div class="status-item">
+            <div>
+              <strong>Epson WIA Scanner</strong>
+              <p id="scannerStatusDetail">Loading...</p>
+            </div>
+            <span class="tag online">Active</span>
+          </div>
+
+          <div class="status-item">
+            <div>
+              <strong>Apple AirPrint / Bonjour</strong>
+              <p>Broadcasted on port 631 (_ipp._tcp.local)</p>
+            </div>
+            <span class="tag online">Broadcasting</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Windows 11 All-in-One Print & Scan Server • Built for Epson EcoTank L3110 Series</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

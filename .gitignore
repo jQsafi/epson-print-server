@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv
+env/
+venv/
+ENV/
+
+# Spool and temporary runtime files
+temp/
+*.bmp
+*.jpg
+*.jpeg
+*.png
+*.pdf
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

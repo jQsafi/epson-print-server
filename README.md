@@ -4,6 +4,19 @@ A hybrid network print & scan server designed for an **Epson EcoTank L3110** (or
 
 This turns your USB-only printer into a **network wireless printer** with **Apple AirPrint** and a **Web Dashboard** for browser-based printing and scanning from any phone, tablet, or laptop on your local Wi-Fi.
 
+[![Target OS](https://img.shields.io/badge/OS-Windows%2011-blue.svg)](https://microsoft.com)
+[![Hardware](https://img.shields.io/badge/Hardware-Epson%20EcoTank%20L3110-orange.svg)](https://epson.com)
+[![AirPrint](https://img.shields.io/badge/AirPrint-Supported%20(IPP%202.0)-green.svg)](https://apple.com)
+[![Zero .NET](https://img.shields.io/badge/Dependencies-Zero%20.NET%20%2F%20C%23-brightgreen.svg)](#)
+
+---
+
+## 📚 Documentation Index
+- 📖 **[Windows 11 Setup Guide (SETUP_WINDOWS11.md)](SETUP_WINDOWS11.md)**: Step-by-step driver setup, firewall configuration, and 24/7 background service setup.
+- 🏛️ **[Technical Architecture (ARCHITECTURE.md)](ARCHITECTURE.md)**: Deep dive into WIA COM, Win32 spooler routing, and IPP binary packet flows.
+- 🤖 **[AI & Agent Instructions (AGENTS.md)](AGENTS.md)**: Rules and constraints for AI coding agents working on this codebase.
+- 🤝 **[Contributing Guidelines (CONTRIBUTING.md)](CONTRIBUTING.md)**: Guidelines for code style and pull requests.
+
 ---
 
 ## 🌟 Key Features

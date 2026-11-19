@@ -1,0 +1,11 @@
+# Rules for Cursor & Copilot in epson-print-server
+
+- Target OS: Windows 11 (x64)
+- Target Device: Epson EcoTank L3110 All-in-One USB
+- Languages: Python 3.10+ (Backend & Hardware Engine) and Node.js (Web UI & Gateway).
+- Strict Rule: Absolutely NO C# or .NET code, assemblies, or tools.
+- Windows Subsystems:
+  - Scanner: Windows Image Acquisition (WIA 2.0 COM) via Python `win32com.client`.
+  - Printer: Windows Print Spooler (`winspool.drv`) via `win32print` or `win32api.ShellExecute("printto", ...)`.
+  - AirPrint: RFC 8010/8011 IPP 2.0 binary parser on TCP port 631 + mDNS via `zeroconf`.
+- Python COM Safety: Always call `pythoncom.CoInitialize()` and `pythoncom.CoUninitialize()` when invoking WIA.

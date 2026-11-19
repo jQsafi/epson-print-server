@@ -1,6 +1,6 @@
 /**
  * Node.js Web Dashboard & API Proxy Server
- * Serves the responsive web frontend and bridges requests to the Python FastAPI hardware backend.
+ * Serves the responsive web frontend and bridges requests to the Python Hardware Engine.
  */
 
 const express = require('express');
@@ -14,12 +14,12 @@ const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://127.0.0.1:5
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy all /api requests to the Python Hardware Engine
+// Proxy /api requests to the Python Hardware Engine (preserving /api prefix)
 app.use(
-  '/api',
   createProxyMiddleware({
     target: PYTHON_BACKEND_URL,
     changeOrigin: true,
+    pathFilter: '/api/**',
     onError: (err, req, res) => {
       console.error('[Proxy Error] Could not connect to Python backend:', err.message);
       res.status(503).json({

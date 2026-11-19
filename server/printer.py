@@ -1,18 +1,29 @@
-"""Windows Print Spooler integration for Epson L3110."""
+"""Windows Print Spooler integration with Virtual PDF Printer Simulation."""
 
 import os
+import shutil
+import time
 import subprocess
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from .config import DEFAULT_PRINTER_KEYWORD, SPOOL_DIR
+from .config import DEFAULT_PRINTER_KEYWORD, SPOOL_DIR, PRINTED_OUTPUT_DIR, IS_WINDOWS, SIMULATION_MODE
 
 logger = logging.getLogger("printer")
 
 
 def list_printers() -> List[Dict[str, Any]]:
-    """List all installed Windows printers using win32print."""
+    """List printers (Windows Spooler or Simulated PDF Printer)."""
+    if not IS_WINDOWS or SIMULATION_MODE:
+        return [{
+            "name": "Virtual PDF Printer (Epson L3110 Simulator)",
+            "is_default": True,
+            "is_epson": True,
+            "status": "Ready",
+            "comment": "Simulated PDF Spooler - saves printed jobs as PDF to temp/printed_output/"
+        }]
+
     printers = []
     try:
         import win32print
@@ -23,8 +34,6 @@ def list_printers() -> List[Dict[str, Any]]:
         for flags, description, name, comment in installed:
             is_epson = DEFAULT_PRINTER_KEYWORD.lower() in name.lower()
             is_default = (name == default_printer)
-
-            # Query detailed status
             status_str = "Ready"
             try:
                 h_printer = win32print.OpenPrinter(name)
@@ -52,30 +61,37 @@ def list_printers() -> List[Dict[str, Any]]:
             })
     except Exception as e:
         logger.error(f"Failed to list Windows printers: {e}")
+        printers.append({
+            "name": "Virtual PDF Printer (Fallback)",
+            "is_default": True,
+            "is_epson": True,
+            "status": "Ready",
+            "comment": "Fallback Virtual PDF Printer"
+        })
     return printers
 
 
 def get_target_printer(printer_name: Optional[str] = None) -> str:
-    """Finds the designated Epson printer or falls back to system default."""
+    """Finds target printer name."""
+    if not IS_WINDOWS or SIMULATION_MODE:
+        return "Virtual PDF Printer (Epson L3110 Simulator)"
+
     try:
         import win32print
         all_printers = list_printers()
-
         if printer_name:
             for p in all_printers:
                 if p["name"].lower() == printer_name.lower():
                     return p["name"]
 
-        # Search for Epson keyword
         for p in all_printers:
-            if p["is_epson"]:
+            if p.get("is_epson"):
                 return p["name"]
 
-        # Default fallback
         return win32print.GetDefaultPrinter()
     except Exception as e:
         logger.warning(f"Using fallback printer selection: {e}")
-        return printer_name or "EPSON L3110 Series"
+        return printer_name or "Virtual PDF Printer (Epson L3110 Simulator)"
 
 
 def print_file(
@@ -84,22 +100,52 @@ def print_file(
     copies: int = 1
 ) -> Dict[str, Any]:
     """
-    Submits a file directly to the Windows Print Spooler for the target printer.
-    Dispatches through win32api ShellExecute or PowerShell Start-Process.
+    Prints a file.
+    In Simulation Mode (or non-Windows), acts as a Virtual PDF Printer:
+    spools, stores, and outputs simulated printed PDF files into temp/printed_output/.
     """
-    target = get_target_printer(printer_name)
     path_obj = Path(filepath).resolve()
-
     if not path_obj.exists():
         raise FileNotFoundError(f"File to print not found: {filepath}")
 
-    logger.info(f"Submitting print job for '{path_obj.name}' to '{target}' (Copies: {copies})")
+    target = get_target_printer(printer_name)
 
-    # Strategy 1: win32api ShellExecute "printto"
+    # 1. Simulation Mode (Virtual PDF Printer)
+    if not IS_WINDOWS or SIMULATION_MODE or "virtual" in target.lower():
+        timestamp = int(time.time())
+        simulated_outputs = []
+
+        for i in range(copies):
+            copy_suffix = f"_copy{i+1}" if copies > 1 else ""
+            out_filename = f"printed_{timestamp}_{path_obj.stem}{copy_suffix}{path_obj.suffix}"
+            out_path = PRINTED_OUTPUT_DIR / out_filename
+
+            # If it's an image, we can also convert to PDF or copy directly
+            if path_obj.suffix.lower() in (".png", ".jpg", ".jpeg"):
+                from PIL import Image
+                with Image.open(str(path_obj)) as img:
+                    pdf_out = PRINTED_OUTPUT_DIR / f"printed_{timestamp}_{path_obj.stem}{copy_suffix}.pdf"
+                    img.convert("RGB").save(str(pdf_out), "PDF")
+                    simulated_outputs.append(str(pdf_out))
+            else:
+                shutil.copyfile(str(path_obj), str(out_path))
+                simulated_outputs.append(str(out_path))
+
+        logger.info(f"[SIMULATOR] Printed {copies} copy/copies of '{path_obj.name}' to '{target}'. Output: {simulated_outputs}")
+        return {
+            "success": True,
+            "filename": path_obj.name,
+            "printer": target,
+            "copies": copies,
+            "engine": "virtual_pdf_spooler",
+            "simulated_outputs": simulated_outputs
+        }
+
+    # 2. Windows 11 Native Spooler
+    logger.info(f"Submitting print job for '{path_obj.name}' to '{target}' (Copies: {copies})")
     try:
         import win32api
         for _ in range(copies):
-            # 0 = SW_HIDE
             win32api.ShellExecute(
                 0,
                 "printto",
@@ -118,7 +164,7 @@ def print_file(
     except Exception as win32_err:
         logger.warning(f"win32api ShellExecute failed: {win32_err}. Trying PowerShell fallback...")
 
-    # Strategy 2: PowerShell Start-Process with -Verb PrintTo
+    # Strategy 2: PowerShell Start-Process
     try:
         ps_cmd = f'Start-Process -FilePath "{str(path_obj)}" -Verb PrintTo -ArgumentList "\"{target}\"" -WindowStyle Hidden'
         for _ in range(copies):

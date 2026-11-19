@@ -1,11 +1,10 @@
-"""AirPrint (IPP 2.0 & mDNS / Bonjour) Responder for Epson L3110 on Windows."""
+"""AirPrint (IPP 2.0 & mDNS / Bonjour) Responder with graceful dependency fallback."""
 
 import socket
 import logging
 import threading
 from typing import Optional
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from zeroconf import Zeroconf, ServiceInfo
 
 from .config import LOCAL_IP, IPP_PORT, SPOOL_DIR
 from .printer import print_file, get_target_printer
@@ -22,7 +21,6 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
     """Handles IPP 2.0 requests from iOS (AirPrint) and macOS clients."""
 
     def log_message(self, format, *args):
-        # Silence verbose request logs
         return
 
     def do_POST(self):
@@ -40,43 +38,38 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
 
         logger.info(f"IPP Request: Op 0x{operation_id:04x}, ReqID {request_id} from {self.client_address[0]}")
 
-        # Locate document data start (after end-of-attributes-tag 0x03)
         doc_offset = -1
         for i in range(8, len(post_data)):
             if post_data[i] == 0x03:
                 doc_offset = i + 1
                 break
 
-        # Process Operations
         if operation_id in (IPP_OP_PRINT_JOB, IPP_OP_VALIDATE_JOB):
             if operation_id == IPP_OP_PRINT_JOB and doc_offset > 0 and doc_offset < len(post_data):
                 doc_bytes = post_data[doc_offset:]
-                # Save incoming PDF or raster
                 job_file = SPOOL_DIR / f"airprint_job_{request_id}.pdf"
                 job_file.write_bytes(doc_bytes)
-                logger.info(f"Received AirPrint document ({len(doc_bytes)} bytes). Spooling to printer...")
+                logger.info(f"Received AirPrint document ({len(doc_bytes)} bytes). Spooling...")
                 try:
                     print_file(str(job_file))
                 except Exception as e:
                     logger.error(f"Failed to print AirPrint job: {e}")
 
-            # Send Successful-OK Response
             self.send_response(200)
             self.send_header("Content-Type", "application/ipp")
             self.end_headers()
 
-            # Construct IPP response header
             response_header = bytearray([
                 version_major, version_minor,
                 (IPP_STATUS_OK >> 8) & 0xFF, IPP_STATUS_OK & 0xFF,
                 (request_id >> 24) & 0xFF, (request_id >> 16) & 0xFF,
                 (request_id >> 8) & 0xFF, request_id & 0xFF,
-                0x01,  # operation-attributes-tag
+                0x01,
                 0x47, 0x00, 0x12, ord('a'), ord('t'), ord('t'), ord('r'), ord('i'), ord('b'), ord('u'), ord('t'), ord('e'), ord('s'), ord('-'), ord('c'), ord('h'), ord('a'), ord('r'), ord('s'), ord('e'), ord('t'),
                 0x00, 0x05, ord('u'), ord('t'), ord('f'), ord('-'), ord('8'),
                 0x48, 0x00, 0x1b, ord('a'), ord('t'), ord('t'), ord('r'), ord('i'), ord('b'), ord('u'), ord('t'), ord('e'), ord('s'), ord('-'), ord('n'), ord('a'), ord('t'), ord('u'), ord('r'), ord('a'), ord('l'), ord('-'), ord('l'), ord('a'), ord('n'), ord('g'), ord('u'), ord('a'), ord('g'), ord('e'),
                 0x00, 0x02, ord('e'), ord('n'),
-                0x03   # end-of-attributes-tag
+                0x03
             ])
             self.wfile.write(response_header)
 
@@ -90,10 +83,10 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
                 (IPP_STATUS_OK >> 8) & 0xFF, IPP_STATUS_OK & 0xFF,
                 (request_id >> 24) & 0xFF, (request_id >> 16) & 0xFF,
                 (request_id >> 8) & 0xFF, request_id & 0xFF,
-                0x01,  # operation-attributes-tag
+                0x01,
                 0x47, 0x00, 0x12, ord('a'), ord('t'), ord('t'), ord('r'), ord('i'), ord('b'), ord('u'), ord('t'), ord('e'), ord('s'), ord('-'), ord('c'), ord('h'), ord('a'), ord('r'), ord('s'), ord('e'), ord('t'),
                 0x00, 0x05, ord('u'), ord('t'), ord('f'), ord('-'), ord('8'),
-                0x03   # end-of-attributes-tag
+                0x03
             ])
             self.wfile.write(response)
         else:
@@ -114,7 +107,7 @@ class AirPrintService:
 
     def __init__(self, port: int = IPP_PORT):
         self.port = port
-        self.zeroconf: Optional[Zeroconf] = None
+        self.zeroconf = None
         self.httpd: Optional[HTTPServer] = None
         self.server_thread: Optional[threading.Thread] = None
 
@@ -126,14 +119,14 @@ class AirPrintService:
             self.server_thread.start()
             logger.info(f"AirPrint IPP listener active on port {self.port}")
         except Exception as e:
-            logger.warning(f"Could not bind IPP port {self.port}: {e}. (Port may require administrator privileges).")
+            logger.warning(f"Could not bind IPP port {self.port}: {e}")
 
-        # 2. Start mDNS Broadcaster
+        # 2. Start mDNS Broadcaster (if zeroconf installed)
         try:
+            from zeroconf import Zeroconf, ServiceInfo
             self.zeroconf = Zeroconf()
             printer_name = get_target_printer()
 
-            # Prepare Apple AirPrint TXT Properties
             desc = {
                 b"txtvers": b"1",
                 b"qtotal": b"1",
@@ -157,12 +150,19 @@ class AirPrintService:
 
             self.zeroconf.register_service(info)
             logger.info(f"AirPrint mDNS registered: '{printer_name}' at {LOCAL_IP}:{self.port}")
-
+        except ImportError:
+            logger.info("Zeroconf module not installed. IPP listener active; mDNS broadcast skipped.")
         except Exception as e:
             logger.error(f"Failed to start AirPrint mDNS service: {e}")
 
     def stop(self):
         if self.zeroconf:
-            self.zeroconf.close()
+            try:
+                self.zeroconf.close()
+            except Exception:
+                pass
         if self.httpd:
-            self.httpd.shutdown()
+            try:
+                self.httpd.shutdown()
+            except Exception:
+                pass

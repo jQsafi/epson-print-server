@@ -1,8 +1,6 @@
-# Python dependencies for Windows 11 Epson Print & Scan Server
-fastapi>=0.110.0
-uvicorn[standard]>=0.28.0
-pywin32>=306
+# Python dependencies for Epson Print & Scan Server
+flask>=3.0.0
 pillow>=10.2.0
-zeroconf>=0.131.0
-python-multipart>=0.0.9
 requests>=2.31.0
+pywin32>=306; sys_platform == 'win32'
+zeroconf>=0.131.0

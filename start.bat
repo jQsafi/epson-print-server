@@ -1,9 +1,13 @@
 @echo off
-TITLE Epson L3110 Print & Scan Server Gateway
+TITLE Epson Print & Scan Server Gateway
 COLOR 0A
 
+:: Ensure user-installed runtimes are on PATH
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "PATH=%LOCALAPPDATA%\Programs\Python\Python312;%LOCALAPPDATA%\Programs\Python\Python312\Scripts;%LOCALAPPDATA%\Programs\NodeJS;%LOCALAPPDATA%\Programs\Git\cmd;%PATH%"
+
 echo ========================================================
-echo   Epson L3110 All-in-One Gateway (Windows 11)
+echo   Epson All-in-One Gateway (Windows 11)
 echo   Python Hardware Engine + Node.js Web Dashboard
 echo ========================================================
 echo.

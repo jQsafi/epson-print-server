@@ -1,6 +1,11 @@
 # PowerShell 1-Click Startup for Epson Print & Scan Gateway on Windows 11
+$pyPath = "$env:LOCALAPPDATA\Programs\Python\Python312"
+$nodePath = "$env:LOCALAPPDATA\Programs\NodeJS"
+$gitPath = "$env:LOCALAPPDATA\Programs\Git\cmd"
+$env:Path = "$pyPath;$pyPath\Scripts;$nodePath;$gitPath;$env:Path"
+
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "  Epson L3110 All-in-One Gateway (Windows 11)" -ForegroundColor Cyan
+Write-Host "  Epson All-in-One Gateway (Windows 11)" -ForegroundColor Cyan
 Write-Host "  Python Hardware Engine + Node.js Web Dashboard" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 

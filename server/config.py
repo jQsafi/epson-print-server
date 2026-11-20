@@ -26,8 +26,8 @@ NODE_WEB_PORT = int(os.environ.get("PORT", 3000))
 IPP_PORT = int(os.environ.get("IPP_PORT", 6310 if not IS_WINDOWS else 631))
 
 # Printer & Scanner Filters
-DEFAULT_PRINTER_KEYWORD = os.environ.get("PRINTER_KEYWORD", "L3110")
-DEFAULT_SCANNER_KEYWORD = os.environ.get("SCANNER_KEYWORD", "L3110")
+DEFAULT_PRINTER_KEYWORD = os.environ.get("PRINTER_KEYWORD", "epson")
+DEFAULT_SCANNER_KEYWORD = os.environ.get("SCANNER_KEYWORD", "epson")
 
 # AirPrint Defaults
 AIRPRINT_ENABLED = os.environ.get("AIRPRINT_ENABLED", "true").lower() in ("true", "1", "yes")
